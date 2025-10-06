@@ -11,19 +11,17 @@ namespace carDealership
     class serverConnection
     {
         HttpClient client = new HttpClient();
-        string baseurl = "";
         public serverConnection(string url)
         {
             if (!url.StartsWith("http://")) throw new ArgumentException("Hibas URL, http:// megadása kötelező");
-            baseurl = url;
+            client.BaseAddress = new Uri(url);
         }
         public async Task<List<Brand>> Getbrands()
         {
             List<Brand> brands = new List<Brand>();
-            string url = baseurl + "/getbrands";
             try
             {
-                HttpResponseMessage response = await client.GetAsync(url);
+                HttpResponseMessage response = await client.GetAsync("/getbrands");
                 response.EnsureSuccessStatusCode();
                 brands = JsonConvert.DeserializeObject<List<Brand>>(await response.Content.ReadAsStringAsync());
             }
@@ -40,7 +38,6 @@ namespace carDealership
             int Manufacturingyear)
         {
             message Message = new message();
-            string url = baseurl + "/addbrand";
             try
             {
                 var jsonData = new
@@ -52,7 +49,7 @@ namespace carDealership
                 };
                 string jsonstring = JsonConvert.SerializeObject(jsonData);
                 HttpContent json = new StringContent(jsonstring, Encoding.UTF8, "application/json");
-                HttpResponseMessage res = await client.PostAsync(url, json);
+                HttpResponseMessage res = await client.PostAsync("/addbrand", json);
                 res.EnsureSuccessStatusCode();
                 Message = JsonConvert.DeserializeObject<message>(await res.Content.ReadAsStringAsync());
 
@@ -66,10 +63,9 @@ namespace carDealership
         public async Task<message> delete(string type, int id)
         {
             message Message = new message();
-            string url = baseurl + "/"+type+"/" + id;
             try
             {
-                HttpResponseMessage res = await client.DeleteAsync(url);
+                HttpResponseMessage res = await client.DeleteAsync("/" + type + "/" + id);
                 res.EnsureSuccessStatusCode();
                 Message = JsonConvert.DeserializeObject<message>(await res.Content.ReadAsStringAsync());
             }
@@ -82,10 +78,9 @@ namespace carDealership
         public async Task<List<Car>> GetCars()
         {
             List<Car> cars = new List<Car>();
-            string url = baseurl + "/getcars";
             try
             {
-                HttpResponseMessage response = await client.GetAsync(url);
+                HttpResponseMessage response = await client.GetAsync("/getcars");
                 response.EnsureSuccessStatusCode();
                 cars = JsonConvert.DeserializeObject<List<Car>>(await response.Content.ReadAsStringAsync());
             }
@@ -103,7 +98,6 @@ namespace carDealership
     int Wheelwidth)
         {
             message Message = new message();
-            string url = baseurl + "/addcar";
             try
             {
                 var jsonData = new
@@ -116,7 +110,7 @@ namespace carDealership
                 };
                 string jsonstring = JsonConvert.SerializeObject(jsonData);
                 HttpContent json = new StringContent(jsonstring, Encoding.UTF8, "application/json");
-                HttpResponseMessage res = await client.PostAsync(url, json);
+                HttpResponseMessage res = await client.PostAsync("/addcar", json);
                 res.EnsureSuccessStatusCode();
                 Message = JsonConvert.DeserializeObject<message>(await res.Content.ReadAsStringAsync());
 
@@ -130,10 +124,9 @@ namespace carDealership
         public async Task<List<Owner>> GetOwners()
         {
             List<Owner> owners = new List<Owner>();
-            string url = baseurl + "/getowners";
             try
             {
-                HttpResponseMessage response = await client.GetAsync(url);
+                HttpResponseMessage response = await client.GetAsync("/getowners");
                 response.EnsureSuccessStatusCode();
                 owners = JsonConvert.DeserializeObject<List<Owner>>(await response.Content.ReadAsStringAsync());
             }
@@ -150,7 +143,6 @@ namespace carDealership
             int Birthyear)
         {
             message Message = new message();
-            string url = baseurl + "/addowner";
             try
             {
                 var jsonData = new
@@ -162,7 +154,7 @@ namespace carDealership
                 };
                 string jsonstring = JsonConvert.SerializeObject(jsonData);
                 HttpContent json = new StringContent(jsonstring, Encoding.UTF8, "application/json");
-                HttpResponseMessage res = await client.PostAsync(url, json);
+                HttpResponseMessage res = await client.PostAsync("/addowner", json);
                 res.EnsureSuccessStatusCode();
                 Message = JsonConvert.DeserializeObject<message>(await res.Content.ReadAsStringAsync());
 
@@ -171,6 +163,53 @@ namespace carDealership
             {
                 Console.WriteLine(e.Message);
             }
+            return Message;
+        }
+        public async Task<message> putCar(
+            int Perfprmance,
+            int Wheelwidth = -1)
+        { 
+            message Message = new message();
+            dynamic jsonData;
+            if (Wheelwidth <=0 && Perfprmance > 0)
+            {
+                 jsonData = new
+                {
+                    performance = Perfprmance,
+                };
+            }
+            else if (Perfprmance <= 0 && Wheelwidth > 0)
+            {
+                jsonData = new
+                {
+                    wheelwidth = Wheelwidth
+                };
+            }
+            else if(Perfprmance> 0 && Wheelwidth > 0)
+            {
+                jsonData = new
+                {
+                    performance = Perfprmance,
+                    wheelwidth = Wheelwidth
+                };
+            }
+            else
+            {
+                return new message() { Message = "semmi sem változott" };
+            }
+            try
+                {
+                    string jsonstring = JsonConvert.SerializeObject(jsonData);
+                    HttpContent json = new StringContent(jsonstring, Encoding.UTF8, "application/json");
+                    HttpResponseMessage res = await client.PutAsync("/addcar", json);
+                    res.EnsureSuccessStatusCode();
+                    Message = JsonConvert.DeserializeObject<message>(await res.Content.ReadAsStringAsync());
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             return Message;
         }
     }
